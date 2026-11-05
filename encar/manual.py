@@ -49,6 +49,8 @@ def detect_kind(data) -> str | None:
     """vehicle / record / inspection / diagnosis — по набору полей."""
     if not isinstance(data, dict):
         return None
+    if isinstance(data.get("vehicle"), dict) and "car_id" in data:
+        return "bundle"                       # всё сразу — из закладки J-Bid
     if "category" in data and ("spec" in data or "advertisement" in data):
         return "vehicle"
     if any(k in data for k in ("myAccidentCnt", "otherAccidentCnt", "accidentCnt", "openData")):
