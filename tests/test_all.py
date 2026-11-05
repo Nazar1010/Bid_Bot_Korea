@@ -147,3 +147,17 @@ def test_bot_imports():
     import bot  # noqa: F401
     kb = bot.keyboard("41000001", 25)
     assert any("Ещё фото" in b.text for row in kb.inline_keyboard for b in row)
+
+
+def test_real_encar_response():
+    """Настоящий ответ api.encar.com (Kia K5, 06.11.2026)."""
+    v = json.loads((Path(__file__).parent / "fixtures" / "real_vehicle_42519941.json").read_text(encoding="utf-8"))
+    r = build_report({"car_id": "42519941", "vehicle": v, "record": None, "record_hidden": False,
+                      "inspection": None, "diagnosis": None})
+    assert r.title == "Kia K5 (2-е поколение, рестайлинг)"
+    assert r.grade == "2.0 Prestige"
+    assert r.year_month == "08.2019" and r.model_year == "2020"
+    assert r.mileage == 71_141 and r.displacement == 1999 and r.price_krw == 12_600_000
+    assert r.vin == "KNAGT411BLA378046" and r.region == "Пусан" and r.color == "чёрный"
+    assert r.warranty is None                    # 36 мес. от 08.2019 давно истекли
+    assert r.photos[0].endswith("_001.jpg") and len(r.photos) == 20
