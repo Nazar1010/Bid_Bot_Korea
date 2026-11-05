@@ -1,0 +1,69 @@
+{
+  "car_id": "41000001",
+  "record_hidden": false,
+  "vehicle": {
+    "vehicleId": 40990002,
+    "vehicleNo": "12가3456",
+    "vin": "KMHL341CBNA123456",
+    "manage": {"firstAdvertisedDateTime": "2026-10-20T10:11:12", "viewCount": 532, "reRegistered": false},
+    "category": {
+      "manufacturerName": "현대", "manufacturerEnglishName": "Hyundai",
+      "modelGroupName": "쏘나타", "modelGroupEnglishName": "Sonata",
+      "modelName": "쏘나타 (DN8)",
+      "gradeName": "1.6 터보", "gradeEnglishName": "1.6 Turbo",
+      "gradeDetailName": "인스퍼레이션", "gradeDetailEnglishName": "Inspiration",
+      "yearMonth": "202203", "formYear": "2022", "domestic": true, "originPrice": 3500,
+      "warranty": {"companyName": "현대", "bodyMonth": 60, "bodyMileage": 100000}
+    },
+    "advertisement": {"price": 2150, "type": "NORMAL", "preVerified": true},
+    "contact": {"userType": "DEALER", "address": "경기 수원시 권선구"},
+    "spec": {"mileage": 41230, "displacement": 1598, "transmissionName": "오토",
+             "fuelName": "가솔린", "colorName": "흰색", "seatCount": 5, "bodyName": "중형차"},
+    "photos": [
+      {"code": "001", "path": "/carpicture07/pic4099/40990002_001.jpg", "type": "OUTER"},
+      {"code": "002", "path": "/carpicture07/pic4099/40990002_002.jpg", "type": "OUTER"},
+      {"code": "002", "path": "/carpicture07/pic4099/40990002_002.jpg", "type": "OUTER"},
+      {"code": "D01", "path": "/carpicture07/pic4099/40990002_d01.jpg", "type": "DIAG"}
+    ],
+    "options": {"standard": ["010", "009", "999"]},
+    "condition": {"accident": {"recordView": true}, "inspection": {"formats": ["TABLE"]}}
+  },
+  "record": {
+    "openData": true, "firstDate": "2022-03-15", "accidentCnt": 2,
+    "myAccidentCnt": 1, "myAccidentCost": 1850000,
+    "otherAccidentCnt": 1, "otherAccidentCost": 420000,
+    "accidents": [
+      {"date": "2024-06-02", "insuranceBenefit": 1850000, "partCost": 900000, "laborCost": 450000, "paintingCost": 500000},
+      {"date": "2023-01-11", "insuranceBenefit": 420000}
+    ],
+    "totalLossCnt": 0, "floodTotalLossCnt": 0, "floodPartLossCnt": null, "robberCnt": 0,
+    "ownerChangeCnt": 1, "ownerChanges": ["2024-09-30"], "carNoChangeCnt": 1,
+    "loan": 0, "business": 0, "government": 0,
+    "notJoinDate1": "202301~202305"
+  },
+  "inspection": {
+    "master": {"accdient": false, "simpleRepair": true, "registrationDate": "2026-10-18",
+               "detail": {"waterlog": false}},
+    "inspectionSource": {"code": "CENTER"},
+    "outers": [
+      {"type": {"code": "P021", "title": "프론트 펜더(좌)"}, "statusTypes": [{"code": "X", "title": "교환"}], "attributes": ["RANK_ONE"]},
+      {"type": {"code": "P031", "title": "도어(앞,우)"}, "statusTypes": [{"code": "W", "title": "판금/용접"}], "attributes": ["RANK_ONE"]}
+    ],
+    "inners": [
+      {"type": {"code": "S01", "title": "원동기"}, "children": [
+        {"type": {"title": "작동상태(공회전)"}, "statusType": {"code": "1", "title": "양호"}},
+        {"type": {"title": "오일누유"}, "children": [
+          {"type": {"title": "실린더 헤드"}, "statusType": {"code": "4", "title": "미세누유"}}
+        ]}
+      ]},
+      {"type": {"code": "S05", "title": "제동"}, "children": [
+        {"type": {"title": "브레이크 오일 누유"}, "statusType": {"code": "3", "title": "없음"}}
+      ]}
+    ]
+  },
+  "diagnosis": {"items": [
+    {"name": "CHECKER_COMMENT", "result": "무사고 차량입니다"},
+    {"name": "HOOD", "resultCode": "NORMAL"},
+    {"name": "FRONT_FENDER_LEFT", "resultCode": "REPLACEMENT"}
+  ]}
+}
