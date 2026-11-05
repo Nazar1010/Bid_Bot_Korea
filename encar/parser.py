@@ -1,4 +1,5 @@
 """Сырые ответы Encar → аккуратная структура отчёта на русском."""
+import re
 from dataclasses import dataclass, field
 from datetime import date
 
@@ -291,6 +292,15 @@ def build_report(raw: dict) -> CarReport:
     gen = ""
     if "(" in model_full:
         gen = model_full[model_full.find("("):].strip()
+    else:
+        tags = []
+        m = re.search(r"(\d+)\s*세대", model_full)
+        if m:
+            tags.append(f"{m.group(1)}-е поколение")
+        if "더 뉴" in model_full or "더뉴" in model_full:
+            tags.append("рестайлинг")
+        if tags:
+            gen = "(" + ", ".join(tags) + ")"
     model = (model_group + (" " + gen if gen and gen not in model_group else "")).strip()
 
     ym = str(cat.get("yearMonth") or "")
@@ -300,9 +310,11 @@ def build_report(raw: dict) -> CarReport:
     fuel_raw = str(spec.get("fuelName") or "")
     photos = []
     for p in v.get("photos") or []:
-        if isinstance(p, dict) and p.get("path") and str(p.get("type") or "").upper() not in ("DIAG", "DIAG2"):
+        if isinstance(p, dict) and p.get("path") and str(p.get("type") or "").upper() not in (
+                "DIAG", "DIAG2", "THUMBNAIL"):
             if p["path"] not in photos:
                 photos.append(p["path"])
+    photos.sort()                       # _001, _002 … — порядок, как на сайте
 
     options = []
     opts = v.get("options") or {}
@@ -315,10 +327,16 @@ def build_report(raw: dict) -> CarReport:
 
     warranty = None
     w = cat.get("warranty") or {}
-    if w.get("companyName") or w.get("bodyMonth"):
+    end_y, end_m = None, None
+    if w.get("bodyMonth") and len(ym) >= 6:
+        total = _int(ym[:4]) * 12 + _int(ym[4:6]) - 1 + _int(w["bodyMonth"])
+        end_y, end_m = divmod(total, 12)
+        end_m += 1
+    still_valid = end_y is not None and (end_y, end_m) >= (date.today().year, date.today().month)
+    if still_valid and _int(spec.get("mileage")) < _int(w.get("bodyMileage"), 10**9):
         company = D.lookup(D.MAKES, w.get("companyName"), None) or "заводская"
         warranty = (f"{company}: кузов/двигатель "
-                    f"{w.get('bodyMonth') or '?'} мес. / {_int(w.get('bodyMileage')):,} км").replace(",", " ")
+                    f"{w.get('bodyMonth') or '?'} мес. / {_int(w.get('bodyMileage')):,} км, до {end_m:02d}.{end_y}").replace(",", " ")
 
     vin = v.get("vin")
     if not (isinstance(vin, str) and len(vin) == 17 and vin.isalnum()):

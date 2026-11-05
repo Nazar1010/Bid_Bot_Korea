@@ -23,8 +23,6 @@ import config
 log = logging.getLogger(__name__)
 
 API = "https://api.encar.com"
-VEHICLE_INCLUDE = ("ADVERTISEMENT,CATEGORY,CONDITION,CONTACT,MANAGE,OPTIONS,"
-                   "PHOTOS,SPEC,PARTNERSHIP,CENTER,VIEW")
 PHOTO_BASE = "https://ci.encar.com/carpicture"
 PHOTO_FALLBACK_BASE = "https://imgcar.encar.com"
 PHOTO_SIZE = "?impolicy=heightRate&rh=720&cw=1080&ch=720&cg=Center"
@@ -111,6 +109,7 @@ class EncarClient:
                 continue
             if r.status_code in (404, 410):
                 if required:
+                    log.warning("encar 404 %s: %s", url, " ".join(r.text[:300].split()))
                     raise CarNotFound(url)
                 return None
             if r.status_code in (429, 500, 502, 503, 504):
@@ -136,8 +135,8 @@ class EncarClient:
         return None
 
     async def vehicle(self, car_id: str) -> dict:
-        data = await self._get_json(f"{API}/v1/readside/vehicle/{car_id}?include={VEHICLE_INCLUDE}",
-                                    required=True)
+        # Без параметра include: с ним Encar отвечает 404 (проверено 06.11.2026).
+        data = await self._get_json(f"{API}/v1/readside/vehicle/{car_id}", required=True)
         if not isinstance(data, dict) or not data.get("category"):
             raise CarNotFound(car_id)
         return data
@@ -184,21 +183,41 @@ class EncarClient:
                 continue
         return None
 
-    async def ping(self) -> str:
-        """Проверка доступности Encar с этого сервера (для /check)."""
+    async def _probe(self, name: str, url: str) -> tuple[str, httpx.Response | None]:
+        t = time.monotonic()
+        try:
+            r = await self._http.get(url)
+        except httpx.HTTPError as e:
+            return f"{name}: ОШИБКА {e.__class__.__name__} за {(time.monotonic() - t):.1f} с", None
+        body = " ".join(r.text[:160].split())
+        server = r.headers.get("server", "?")
+        return (f"{name}: HTTP {r.status_code}, {len(r.content)} б, {(time.monotonic() - t):.1f} с, "
+                f"server={server}\n   {body}"), r
+
+    async def ping(self, car_id: str | None = None) -> str:
+        """Диагностика доступа к Encar с этого сервера (для /check [номер])."""
         lines = []
-        tests = [
-            ("поиск", f"{API}/search/car/list/general?count=true&q=(And.Hidden.N.)&sr=%7CModifiedDate%7C0%7C1"),
-            ("сайт", "https://fem.encar.com/"),
-        ]
-        for name, url in tests:
-            t = time.monotonic()
+        # 1) Поиск: берём номер любой свежей машины — она точно существует
+        line, r = await self._probe(
+            "поиск", f"{API}/search/car/list/premium?count=true&q=(And.Hidden.N._.CarType.Y.)"
+                     f"&sr=%7CModifiedDate%7C0%7C3")
+        lines.append(line)
+        fresh_id = None
+        if r is not None and r.status_code == 200:
             try:
-                r = await self._http.get(url)
-                lines.append(f"{name}: HTTP {r.status_code}, {len(r.content)} байт, "
-                             f"{(time.monotonic() - t):.1f} с")
-            except httpx.HTTPError as e:
-                lines.append(f"{name}: ОШИБКА {e.__class__.__name__} за {(time.monotonic() - t):.1f} с")
+                res = r.json().get("SearchResults") or []
+                fresh_id = str(res[0].get("Id")) if res else None
+            except ValueError:
+                pass
+        # 2) Карточка этой свежей машины
+        if fresh_id:
+            lines.append((await self._probe(f"карточка свежей №{fresh_id}",
+                                            f"{API}/v1/readside/vehicle/{fresh_id}"))[0])
+        # 3) Карточка запрошенной машины + её веб-страница
+        if car_id:
+            lines.append((await self._probe(f"карточка №{car_id}", f"{API}/v1/readside/vehicle/{car_id}"))[0])
+            lines.append((await self._probe("страница fem", DETAIL_PAGE.format(car_id)))[0])
+        lines.append((await self._probe("сайт", "https://fem.encar.com/"))[0])
         return "\n".join(lines)
 
 
