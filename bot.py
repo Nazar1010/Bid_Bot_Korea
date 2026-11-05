@@ -50,7 +50,7 @@ async def get_turnkey(rep: CarReport, user_id: int):
 def rebuild(uid: int) -> CarReport:
     s = _sessions[uid]
     rep = build_report({"car_id": s["car_id"], "vehicle": s["vehicle"], "record": s.get("record"),
-                        "record_hidden": "record" not in s.get("links", {}),
+                        "record_hidden": s.get("record_hidden", "record" not in s.get("links", {})),
                         "inspection": s.get("inspection"), "diagnosis": s.get("diagnosis")})
     _reports[rep.car_id] = rep
     if len(_reports) > 300:
@@ -131,6 +131,26 @@ async def handle_payload(message: Message, data) -> None:
         return
     s = _sessions.get(uid)
 
+    if kind == "bundle":
+        car_id = str(data.get("car_id") or data["vehicle"].get("vehicleId") or "")
+        _sessions[uid] = s = {"car_id": car_id, "vehicle": data["vehicle"], "links": {},
+                              "record": data.get("record"), "inspection": data.get("inspection"),
+                              "diagnosis": data.get("diagnosis"),
+                              "record_hidden": bool(data.get("record_hidden"))
+                              or ((data["vehicle"].get("condition") or {}).get("accident") or {})
+                              .get("recordView") is False}
+        _awaiting_hp.pop(uid, None)
+        rep = rebuild(uid)
+        _stats["reports"] += 1
+        tk = await get_turnkey(rep, uid)
+        await send_photos(message, rep)
+        await message.answer(texts.card(rep, tk), reply_markup=keyboard(uid, rep),
+                             disable_web_page_preview=True)
+        r = await get_rates()
+        await message.answer(texts.history(rep, r["KRW"]))
+        await message.answer(texts.inspection(rep))
+        return
+
     if kind == "vehicle":
         car_id = str(data.get("vehicleId") or "")
         if s and s.get("car_id") and not s.get("vehicle"):
@@ -191,7 +211,7 @@ async def msg_document(message: Message, bot: Bot):
 
 def _is_json_chunk(message: Message) -> bool:
     t = (message.text or "").lstrip()
-    if t.startswith("{"):
+    if t.startswith(("{", "JBID")):
         return True
     if message.from_user.id in _buffers:
         if t.startswith(("/", "http")) or extract_car_id(t):   # пришла новая ссылка — бросаем склейку

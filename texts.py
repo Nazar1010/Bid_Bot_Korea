@@ -252,6 +252,8 @@ def welcome() -> str:
         "• техосмотр: какие детали меняли и красили, состояние агрегатов;\n"
         "• <b>полную стоимость под ключ</b> во Владивостоке и до Москвы.\n\n"
         "Пример: <code>https://fem.encar.com/cars/detail/42519941</code>\n\n"
+        "⚡ <b>Быстрее всего — закладка J-Bid:</b> откройте машину на Encar, нажмите закладку "
+        "и вставьте сюда скопированный текст. Сразу придёт полный отчёт.\n\n"
         f"Менеджер: @{config.MANAGER_USERNAME} · {config.MANAGER_PHONE}"
     )
 
@@ -270,7 +272,7 @@ def link_block(title: str, url: str) -> str:
 
 def how_to_send(car_id: str, url: str) -> str:
     return (f"🚗 Объявление №{e(car_id)}\n\n" + link_block("Ссылка на данные авто", url)
-            + "\n\n" + HOW_TO)
+            + "\n\n" + HOW_TO + "\n\n⚡ <i>С закладкой J-Bid всё это — один клик на странице Encar.</i>")
 
 
 def next_steps(links: dict) -> str:
