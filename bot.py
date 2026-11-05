@@ -112,10 +112,12 @@ async def cmd_check(message: Message):
     if config.ADMIN_IDS and message.from_user.id not in config.ADMIN_IDS:
         return
     await message.answer("⏳ Проверяю доступ к Encar с этого сервера…")
-    res = await encar.ping()
+    parts = (message.text or "").split(maxsplit=1)
+    car_id = extract_car_id(parts[1]) if len(parts) > 1 else None
+    res = await encar.ping(car_id)
+    log.info("CHECK:\n%s", res)
     proxy = "через прокси" if config.ENCAR_PROXY else "напрямую (без прокси)"
-    await message.answer(f"<b>Encar ({proxy}):</b>\n<code>{texts.e(res)}</code>\n\n"
-                         "Если «ОШИБКА» или HTTP не 200 — впишите ENCAR_PROXY в config.py.")
+    await message.answer(f"<b>Encar ({proxy}):</b>\n<pre>{texts.e(res)[:3500]}</pre>")
 
 
 @router.message(Command("stats"))
